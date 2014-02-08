@@ -43,7 +43,7 @@ import Queue
 import threading
 from shodan import WebAPI
 
-SHODAN_API_KEY = 'dCrBEE7w6icmYSnpqFwGkPu5PoLWq6Z1'
+SHODAN_API_KEY = 'your API key here'
 
 
 # Flag to control threads
