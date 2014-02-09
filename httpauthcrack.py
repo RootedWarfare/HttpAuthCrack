@@ -45,7 +45,6 @@ from shodan import WebAPI
 
 SHODAN_API_KEY = 'Your API key here'
 
-
 # Flag to control threads
 exitFlag = 0    
 
