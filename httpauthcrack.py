@@ -43,7 +43,7 @@ import Queue
 import threading
 from shodan import WebAPI
 
-SHODAN_API_KEY = 'dCrBEE7w6icmYSnpqFwGkPu5PoLWq6Z1'
+SHODAN_API_KEY = 'Your API key here'
 
 
 # Flag to control threads
@@ -103,6 +103,11 @@ def check_basic_auth(host):
                         urllib2.install_opener(opener)
                         source = urllib2.urlopen(host, timeout=5)
                         if len(str(source)) > 0:
+			    # Some devices show an html page after a number of tries to avoid bruteforce. We discard those.
+			    html = str(source.read())
+                            if html.find('HTTP 401') > 0:
+                                log("HTTP 401 found in html. Possibly false positive. Omitting from output")
+                                return
                             # Access granted using admin/admin
                             print "Access granted with "+user+"/"+passwd+" to "+host
                             outputLock.acquire()
@@ -124,6 +129,10 @@ def check_basic_auth(host):
                     urllib2.install_opener(opener)
                     source = urllib2.urlopen(host, timeout=5)
                     if len(str(source)) > 0:
+			html = str(source.read())
+                        if html.find('HTTP 401') > 0:
+                            log("HTTP 401 found in html. Possibly false positive. Omitting from output")
+                            return
                         # Access granted using admin/admin
                         print "Access granted with "+user+"/"+_passwd+" to "+host
                         outputLock.acquire()
@@ -146,6 +155,10 @@ def check_basic_auth(host):
                 urllib2.install_opener(opener)
                 source = urllib2.urlopen(host, timeout=5)
                 if len(str(source)) > 0:
+		    html = str(source.read())
+		    if html.find('HTTP 401') > 0:
+                        log("HTTP 401 found in html. Possibly false positive. Omitting from output")
+                        return 
                     # Access granted using admin/admin
                     print "Access granted with "+_user+"/"+passwd+" to "+host
                     outputLock.acquire()
@@ -167,6 +180,10 @@ def check_basic_auth(host):
             urllib2.install_opener(opener)
             source = urllib2.urlopen(host, timeout=5)
             if len(str(source)) > 0:
+		html = str(source.read())
+                if html.find('HTTP 401') > 0:
+                    log("HTTP 401 found in html. Possibly false positive. Omitting from output")
+                    return
                 # Access granted using admin/admin
                 print "Access granted with "+_user+"/"+_passwd+" to "+host
                 outputLock.acquire()
