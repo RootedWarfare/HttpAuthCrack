@@ -25,9 +25,10 @@ Author:
 
 Versions:
 
-v0.1 (2013/08/08)
-  First release.
-v0.2 (2014/02/04)
+v0.1 (2013/08/08).
+  - First release.
+
+v0.2 (2014/02/04).
   - Added port 8080 from shodan results to list of IPs.
   - Fix a bug in the arguments command line
   - Added option -d / --port to look for into shodan results
