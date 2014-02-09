@@ -28,11 +28,10 @@
 #   - Fix a bug in the arguments command line
 #   - Added option -d / --port to look for into shodan results
 #   - Optimised to avoid create all threads specified by -t switch if they aren't needed
+# v0.3 (2014/02/09)
+#   - Filter of false positives on many IP phone devices.
+#   - Optimized code from "check_basic_auth" function.
 #
-# TODO:
-# Some devices after a number of authentication tries returns an HTTP 200 code and prints the "401 unauthorized" in an html file.
-# This script consider the HTTP 200 code as a granted access so in this cases this means a false positive.
-# It is needed to filter out that results.
 
 import sys
 import getopt

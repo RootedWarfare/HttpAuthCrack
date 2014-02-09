@@ -33,3 +33,8 @@ v0.2 (2014/02/04).
   - Fix a bug in the arguments command line
   - Added option -d / --port to look for into shodan results
   - Optimised to avoid create all threads specified by -t switch if they aren't needed
+
+v0.3 (2014/02/09).
+  - Filter of false positives on many IP phone devices.
+  - Optimized code from "check_basic_auth" function.
+
