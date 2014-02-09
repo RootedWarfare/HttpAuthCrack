@@ -30,7 +30,7 @@
 #   - Optimised to avoid create all threads specified by -t switch if they aren't needed
 #
 # TODO:
-# Some devices after a number of authentication tries returns an HTTP 200 code and prints the 403 Forbidden in an html file.
+# Some devices after a number of authentication tries returns an HTTP 200 code and prints the "401 unauthorized" in an html file.
 # This script consider the HTTP 200 code as a granted access so in this cases this means a false positive.
 # It is needed to filter out that results.
 
@@ -93,107 +93,43 @@ def check_basic_auth(host):
         for user in userlist:
             if passfile:
                 for passwd in passlist:
-                    try:
-                        log("Checking %s/%s" %(user,passwd))
-                        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-                        passman.add_password(None, host, user, passwd)
-                        authhandler = urllib2.HTTPBasicAuthHandler(passman)
-                        opener = urllib2.build_opener(authhandler)
-                        urllib2.install_opener(opener)
-                        source = urllib2.urlopen(host, timeout=5)
-                        if len(str(source)) > 0:
-			    # Some devices show an html page after a number of tries to avoid bruteforce. We discard those.
-			    html = str(source.read())
-                            if html.find('HTTP 401') > 0:
-                                log("HTTP 401 found in html. Possibly false positive. Omitting from output")
-                                return
-                            # Access granted using admin/admin
-                            print "Access granted with "+user+"/"+passwd+" to "+host
-                            outputLock.acquire()
-                            output.writelines("<a href="+host+">"+host+"</a> ("+user+"/"+passwd+")<br>")
-                            outputLock.release()
-                            return
-                    except Exception, e:
-                        log("Error: %s" % e)
-                        pass
-                    except KeyboardInterrupt:
-                        sys.exit()
+                    test_host(host,user,passwd)
             else:
-                try:
-                    log("Checking %s/%s" %(user,_passwd))
-                    passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-                    passman.add_password(None, host, user, _passwd)
-                    authhandler = urllib2.HTTPBasicAuthHandler(passman)
-                    opener = urllib2.build_opener(authhandler)
-                    urllib2.install_opener(opener)
-                    source = urllib2.urlopen(host, timeout=5)
-                    if len(str(source)) > 0:
-			html = str(source.read())
-                        if html.find('HTTP 401') > 0:
-                            log("HTTP 401 found in html. Possibly false positive. Omitting from output")
-                            return
-                        # Access granted using admin/admin
-                        print "Access granted with "+user+"/"+_passwd+" to "+host
-                        outputLock.acquire()
-                        output.writelines("<a href="+host+">"+host+"</a> ("+user+"/"+_passwd+")<br>")
-                        outputLock.release()
-                        return
-                except Exception, e:
-                    log("Error: %s" % e)
-                    pass
-                except KeyboardInterrupt:
-                    sys.exit()
+                test_host(host,user,_passwd)
     elif passfile:
         for passwd in passlist:
-            try:
-                log("Checking %s/%s" %(_user,passwd))
-                passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-                passman.add_password(None, host, _user, passwd)
-                authhandler = urllib2.HTTPBasicAuthHandler(passman)
-                opener = urllib2.build_opener(authhandler)
-                urllib2.install_opener(opener)
-                source = urllib2.urlopen(host, timeout=5)
-                if len(str(source)) > 0:
-		    html = str(source.read())
-		    if html.find('HTTP 401') > 0:
-                        log("HTTP 401 found in html. Possibly false positive. Omitting from output")
-                        return 
-                    # Access granted using admin/admin
-                    print "Access granted with "+_user+"/"+passwd+" to "+host
-                    outputLock.acquire()
-                    output.writelines("<a href="+host+">"+host+"</a> ("+_user+"/"+passwd+")<br>")
-                    outputLock.release()
-                    return
-            except Exception, e:
-                log("Error: %s" % e)
-                pass
-            except KeyboardInterrupt:
-                sys.exit()
+            test_host(host,_user,passwd)
     else:
-        try:
-            log("Checking %s/%s" %(_user,_passwd))
-            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            passman.add_password(None, host, _user, _passwd)
-            authhandler = urllib2.HTTPBasicAuthHandler(passman)
-            opener = urllib2.build_opener(authhandler)
-            urllib2.install_opener(opener)
-            source = urllib2.urlopen(host, timeout=5)
-            if len(str(source)) > 0:
-		html = str(source.read())
-                if html.find('HTTP 401') > 0:
-                    log("HTTP 401 found in html. Possibly false positive. Omitting from output")
-                    return
-                # Access granted using admin/admin
-                print "Access granted with "+_user+"/"+_passwd+" to "+host
-                outputLock.acquire()
-                output.writelines("<a href="+host+">"+host+"</a> ("+_user+"/"+_passwd+")<br>")
-                outputLock.release()
-        except Exception, e:
-            log("Error: %s" % e)
-            pass
-        except KeyboardInterrupt:
-            sys.exit()
+        test_host(host,_user,_passwd)
 
+def test_host(host,user,passwd):
+    """Test the basic auth in host given using usr and pass given. """
+    try:
+        log("["+host+"] Checking %s/%s" %(user,passwd))
+        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        passman.add_password(None, host, user, passwd)
+        authhandler = urllib2.HTTPBasicAuthHandler(passman)
+        opener = urllib2.build_opener(authhandler)
+        urllib2.install_opener(opener)
+        source = urllib2.urlopen(host, timeout=5)
+        if len(str(source)) > 0:
+	    # Some devices show an html page after a number of tries to avoid bruteforce. We discard those.
+            html = str(source.read())
+            if html.find('HTTP 401') > 0:
+                log("["+host+"] HTTP 401 found in html. Possibly false positive. Omitting from output")
+                return
+            # Access granted using admin/admin
+            print "Access granted with "+user+"/"+passwd+" to "+host
+            outputLock.acquire()
+            output.writelines("<a href="+host+">"+host+"</a> ("+user+"/"+passwd+")<br>")
+            outputLock.release()
+            return
+    except Exception, e:
+        log("["+host+"] Error: %s" % e)
+        pass
+    except KeyboardInterrupt:
+        sys.exit()
+ 
 def build_iplist_from_shodan(sh_res):
     """ Build a list of IP addresses from the shodan query results. """
     list = []
