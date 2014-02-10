@@ -92,14 +92,18 @@ def check_basic_auth(host):
         for user in userlist:
             if passfile:
                 for passwd in passlist:
-                    test_host(host,user,passwd)
+                    if test_host(host,user,passwd) < 0:
+                        return
             else:
-                test_host(host,user,_passwd)
+                if test_host(host,user,_passwd) < 0:
+                    return
     elif passfile:
         for passwd in passlist:
-            test_host(host,_user,passwd)
+            if test_host(host,_user,passwd) < 0:
+                return
     else:
-        test_host(host,_user,_passwd)
+        if test_host(host,_user,_passwd) < 0:
+            return
 
 def test_host(host,user,passwd):
     """Test the basic auth in host given using usr and pass given. """
@@ -116,13 +120,13 @@ def test_host(host,user,passwd):
             html = str(source.read())
             if html.find('HTTP 401') > 0:
                 log("["+host+"] HTTP 401 found in html. Possibly false positive. Omitting from output")
-                return
+                return -1
             # Access granted using admin/admin
             print "Access granted with "+user+"/"+passwd+" to "+host
             outputLock.acquire()
             output.writelines("<a href="+host+">"+host+"</a> ("+user+"/"+passwd+")<br>")
             outputLock.release()
-            return
+            return 0
     except Exception, e:
         log("["+host+"] Error: %s" % e)
         pass
