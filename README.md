@@ -42,3 +42,5 @@ v0.4 (2014/02/27).
   - Fix bugs in "test_host" function
   - Separate log functions in other file
   - Add colors to output
+  - Add report dir with templates for header.html and footer.html to make the reports.
+  - the output report is stored in the output folder
