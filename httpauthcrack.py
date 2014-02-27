@@ -31,7 +31,10 @@
 # v0.3 (2014/02/09)
 #   - Filter of false positives on many IP phone devices.
 #   - Optimized code from "check_basic_auth" function.
-#
+# v0.4 (2014/02/27)
+#   - Fix bugs in "test_host" function
+#   - Separate log functions in other file
+#   - Add colors to output
 
 import sys
 import getopt
@@ -40,12 +43,14 @@ import time
 import datetime
 import Queue
 import threading
-from shodan import WebAPI
+from lib import Log
 
 SHODAN_API_KEY = 'Your API key here'
 
 # Flag to control threads
 exitFlag = 0    
+
+# Set debug level (0 default)
 
 class myThread (threading.Thread):
     def __init__(self, threadID, q):
@@ -54,9 +59,9 @@ class myThread (threading.Thread):
         self.q = q
     
     def run(self):
-        log("Starting Thread %d" % self.threadID)
+        Log.info("Starting Thread %d" % self.threadID)
         process_ips(self.threadID, self.q)
-        log("Exiting Thread %d" % self.threadID)
+        Log.info("Exiting Thread %d" % self.threadID)
 
 def process_ips(threadID, q):
     while not exitFlag:
@@ -65,7 +70,7 @@ def process_ips(threadID, q):
             ip = q.get()
             queueLock.release()
             host = "http://"+ip
-            log("Thread %s Checking %s" % (threadID, host))
+            Log.info("Thread %s Checking %s" % (threadID, host))
             try:
                 source = urllib2.urlopen(host, timeout=1).read()
             except Exception, e:
@@ -79,6 +84,7 @@ def process_ips(threadID, q):
 
 def shodan_search(term):
     """ Search in shodan using the dork received as parameter and return a list of IPs. """
+    from shodan import WebAPI
     api = WebAPI(SHODAN_API_KEY)
     try:
         results = api.search(term)
@@ -108,7 +114,7 @@ def check_basic_auth(host):
 def test_host(host,user,passwd):
     """Test the basic auth in host given using usr and pass given. """
     try:
-        log("["+host+"] Checking %s/%s" %(user,passwd))
+        Log.info("["+host+"] Checking %s/%s" %(user,passwd))
         passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
         passman.add_password(None, host, user, passwd)
         authhandler = urllib2.HTTPBasicAuthHandler(passman)
@@ -119,17 +125,18 @@ def test_host(host,user,passwd):
 	    # Some devices show an html page after a number of tries to avoid bruteforce. We discard those.
             html = str(source.read())
             if html.find('HTTP 401') > 0:
-                log("["+host+"] HTTP 401 found in html. Possibly false positive. Omitting from output")
+                Log.warn("["+host+"] HTTP 401 found in html. Possibly false positive. Omitting from output")
                 return -1
             # Access granted using admin/admin
-            print "Access granted with "+user+"/"+passwd+" to "+host
+            Log.success("Access granted with "+user+"/"+passwd+" to "+host)
             outputLock.acquire()
             output.writelines("<a href="+host+">"+host+"</a> ("+user+"/"+passwd+")<br>")
             outputLock.release()
-            return 0
+            return -1  # return -1 to stop looking in a host when we have access to.
+        return 0
     except Exception, e:
-        log("["+host+"] Error: %s" % e)
-        pass
+        Log.err("["+host+"] Error: %s" % e)
+        return 0       
     except KeyboardInterrupt:
         sys.exit()
  
@@ -164,7 +171,6 @@ def main(argv):
     global _user
     global _passwd
     global _dork
-    global _debug
     global _port
     global userfile
     global passfile
@@ -173,7 +179,6 @@ def main(argv):
     _user = 'admin'     # Default user
     _passwd = 'admin'   # Default password
     _dork = ""
-    _debug = 0
     _port = 0
     th_num = 10  # by default we use 10 threads
     userfile = ""
@@ -200,7 +205,7 @@ def main(argv):
         elif opt in ("-d", "--port"):
             _port = int(arg)
         elif opt in ("-v", "--verbose"):
-            _debug = 1
+            Log.debug(1)
     
 
 def usage():
@@ -228,9 +233,9 @@ def usage():
     print "\t--verbose\t\t#\n"
 
 
-def log(msg):
-    if (_debug == 1):
-        sys.stdout.write("DEBUG: " + msg + "\n")
+#def log(msg):
+#    if (_debug == 1):
+#        sys.stdout.write("DEBUG: " + msg + "\n")
 
 if __name__ == '__main__':
     # This code runs when script is started from command line
@@ -316,7 +321,7 @@ if __name__ == '__main__':
         outputLock.release()
         output.close()
     except KeyboardInterrupt, e:
-        log("Terminating all Threads due to Keyboard Interrupt...")
+        Log.warn("Terminating all Threads due to Keyboard Interrupt...")
         outputLock.acquire()
         output.writelines("<h2>Execution stoped by user!!!</h2>")
         outputLock.release()
