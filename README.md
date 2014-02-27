@@ -38,3 +38,7 @@ v0.3 (2014/02/09).
   - Filter of false positives on many IP phone devices.
   - Optimized code from "check_basic_auth" function.
 
+v0.4 (2014/02/27).
+  - Fix bugs in "test_host" function
+  - Separate log functions in other file
+  - Add colors to output
