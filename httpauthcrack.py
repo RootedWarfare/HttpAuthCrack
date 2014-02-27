@@ -35,6 +35,8 @@
 #   - Fix bugs in "test_host" function
 #   - Separate log functions in other file
 #   - Add colors to output
+#   - Add report dir with templates for header.html and footer.html to make the reports.
+#   - the output report is stored in the output folder
 
 import sys
 import getopt
@@ -43,9 +45,11 @@ import time
 import datetime
 import Queue
 import threading
+import os
 from lib import Log
 
 SHODAN_API_KEY = 'Your API key here'
+REPORT_PATH = "output/"
 
 # Flag to control threads
 exitFlag = 0    
@@ -130,7 +134,7 @@ def test_host(host,user,passwd):
             # Access granted using admin/admin
             Log.success("Access granted with "+user+"/"+passwd+" to "+host)
             outputLock.acquire()
-            output.writelines("<a href="+host+">"+host+"</a> ("+user+"/"+passwd+")<br>")
+            output.writelines("<tr><td><a href="+host+" target=\"_blank\">"+host+"</a></td><td>"+user+"</td><td>"+passwd+"</td></tr>")
             outputLock.release()
             return -1  # return -1 to stop looking in a host when we have access to.
         return 0
@@ -270,7 +274,9 @@ if __name__ == '__main__':
     # Output to save the results
     global output
     now = datetime.datetime.now()
-    outputname = "results" + now.strftime("%Y-%m-%d-%H-%M")+ ".html"
+    if not os.path.exists(REPORT_PATH):
+        os.makedirs(REPORT_PATH)
+    outputname = REPORT_PATH+"results" + now.strftime("%Y-%m-%d-%H-%M")+ ".html"
     output = open(outputname,"w+")
 
     # Create a Queue to fill with ips
@@ -280,10 +286,14 @@ if __name__ == '__main__':
     outputLock = threading.Lock()
 
     outputLock.acquire()
-    output.writelines("<html><body>")
+    #write the report header.
+    aux = open("report/header.html","r")
+    output.writelines(aux.read())
+    aux.close()
     if _dork:
         output.writelines("<h1>Results from Dork: %s</h1>" % _dork)
-    output.writelines("<h2>Total Elements tested: %d</h2>" % len(iplist))
+    output.writelines("<h2>Total tested elements: %d</h2>" % len(iplist))
+    output.writelines("<table><tr><th>Host</th><th>Username</th><th>Password</th></tr>")
     outputLock.release()
 
     threads = []
@@ -316,9 +326,12 @@ if __name__ == '__main__':
             t.join()
 
         # End html log and close the file
+        aux = open("report/footer.html","r")
         outputLock.acquire()
-        output.writelines("</body></html>")
+        output.writelines("</table>")
+        output.writelines(aux.read())
         outputLock.release()
+        aux.close()
         output.close()
     except KeyboardInterrupt, e:
         Log.warn("Terminating all Threads due to Keyboard Interrupt...")
