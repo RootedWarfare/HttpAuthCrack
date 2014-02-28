@@ -6,6 +6,7 @@ RED = '\033[91m'
 ENDC = '\033[0m'
 BOLD = "\033[1m"
 
+globals()["_debug"] = 0
 
 def debug(val):
     globals()["_debug"] = val
