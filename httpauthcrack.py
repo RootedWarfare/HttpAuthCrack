@@ -93,8 +93,8 @@ def process_ips(threadID, q):
 
 def shodan_search(term):
     """ Search in shodan using the dork received as parameter and return a list of IPs. """
-    from shodan import WebAPI
-    api = WebAPI(SHODAN_API_KEY)
+    from shodan import Shodan 
+    api = Shodan(SHODAN_API_KEY)
     try:
         results = api.search(term)
     except Exception, e:
