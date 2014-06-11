@@ -44,3 +44,4 @@ v0.4 (2014/02/27).
   - Add colors to output
   - Add report dir with templates for header.html and footer.html to make the reports.
   - the output report is stored in the output folder
+  - Embeded Logo added to the html report

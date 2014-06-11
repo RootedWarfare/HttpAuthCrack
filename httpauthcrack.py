@@ -37,6 +37,7 @@
 #   - Add colors to output
 #   - Add report dir with templates for header.html and footer.html to make the reports.
 #   - the output report is stored in the output folder
+#   - Embeded logo added to the html report
 
 import sys
 import getopt
@@ -58,8 +59,6 @@ RFOOTER = "report/footer.html" # File with report template footer
 
 # Flag to control threads
 exitFlag = 0    
-
-# Set debug level (0 default)
 
 class myThread (threading.Thread):
     def __init__(self, threadID, q):
@@ -296,7 +295,7 @@ if __name__ == '__main__':
     output.writelines(aux.read())
     aux.close()
     if _dork:
-        output.writelines("<h1>Results from Dork: %s</h1>" % _dork)
+        output.writelines("<h1>Dork: %s</h1>" % _dork)
     output.writelines("<h2>Total tested elements: %d</h2>" % len(iplist))
     output.writelines("<table><tr><th>Host</th><th>Username</th><th>Password</th></tr>")
     outputLock.release()
